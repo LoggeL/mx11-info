@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144.18 70.08">
+  <defs>
+    <style>
+      .cls-1 {
+        letter-spacing: -.1em;
+      }
+
+      .cls-2, .cls-3 {
+        fill: #fff;
+      }
+
+      .cls-3 {
+        font-family: Megavolt-Regular, Megavolt;
+        font-size: 14px;
+      }
+
+      .cls-4 {
+        fill: #242a64;
+      }
+
+      .cls-5 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-6 {
+        fill: #272a63;
+      }
+
+      .cls-7 {
+        letter-spacing: -.01em;
+      }
+    </style>
+  </defs>
+  <g id="Ebene_1" data-name="Ebene 1">
+    <g>
+      <path class="cls-2" d="M.95,8.34h14.98l10.8,13.75h.58l10.8-13.75h14.98v43.56h-14.76v-24.19h-.43l-10.51,11.74h-.72l-10.51-11.74h-.43v24.19H.95V8.34Z"/>
+      <path class="cls-2" d="M87.5,30.09l15.91,21.82h-17.21l-6.98-9.15h-1.01l-6.7,9.15h-18.43l16.56-21.82-16.56-21.75h18.43l6.77,9.22h.94l6.98-9.22h17.21l-15.91,21.75Z"/>
+      <path class="cls-4" d="M115.74,4.5v44.4h-10.85V11.82h-10.01v-7.32h20.86M118.74,1.5h-26.86v13.32h10.01v37.08h16.85V1.5h0Z"/>
+      <path class="cls-6" d="M139.68,4.5v44.4h-10.85V11.82h-10.01v-7.32h20.86M142.68,1.5h-26.86v13.32h10.01v37.08h16.85V1.5h0Z"/>
+      <text class="cls-3" transform="translate(88.85 64.97)"><tspan class="cls-5" x="0" y="0">.</tspan><tspan class="cls-7" x="6.33" y="0"> </tspan><tspan x="9.13" y="0">o</tspan><tspan class="cls-1" x="25.94" y="0">r</tspan><tspan x="36.43" y="0">g</tspan></text>
+    </g>
+  </g>
+</svg>
