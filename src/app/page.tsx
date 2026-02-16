@@ -5,20 +5,35 @@ import { motion } from "framer-motion";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TextGenerateEffect } from "@/components/TextGenerateEffect";
 import { ServiceCard } from "@/components/ServiceCard";
+import { PortfolioCard } from "@/components/PortfolioCard";
 
-const SERVICES = [
-  { host: "immich.mx11.org", name: "Photos", desc: "Self-hosted photo & video backup" },
-  { host: "map.mx11.org", name: "Map", desc: "Interactive mapping service" },
-  { host: "crafty.mx11.org", name: "Game Server Manager", desc: "Manage game servers with ease" },
-  { host: "jellyfin.mx11.org", name: "Media Server", desc: "Stream movies, shows & music" },
-  { host: "bedrock.mx11.org", name: "Minecraft Bedrock", desc: "Bedrock Edition server" },
-  { host: "create.mx11.org", name: "Create", desc: "Creative tools & workspace" },
-  { host: "java.mx11.org", name: "Minecraft Java", desc: "Java Edition server" },
-  { host: "modpack.mx11.org", name: "Modpack", desc: "Minecraft modpack distribution" },
-  { host: "mx11.org", name: "Main", desc: "Main website" },
+const CATEGORIES = [
+  {
+    title: "Media & Apps",
+    services: [
+      { host: "jellyfin.mx11.org", name: "Jellyfin", desc: "Stream movies, shows & music" },
+      { host: "immich.mx11.org", name: "Immich", desc: "Photo & video backup" },
+    ],
+  },
+  {
+    title: "Minecraft",
+    services: [
+      { host: "bedrock.mx11.org", name: "Bedrock", desc: "Bedrock Edition server", copy: "bedrock.mx11.org" },
+      { host: "java.mx11.org", name: "Java", desc: "Java Edition server", copy: "java.mx11.org" },
+      { host: "modpack.mx11.org", name: "Modpack", desc: "Custom modpack server", copy: "modpack.mx11.org" },
+      { host: "create.mx11.org", name: "Create", desc: "Create modpack server", copy: "create.mx11.org" },
+      { host: "crafty.mx11.org", name: "Crafty", desc: "Server management panel" },
+      { host: "map.mx11.org", name: "Dynmap", desc: "Live world map" },
+    ],
+  },
 ];
 
-type StatusMap = Record<string, boolean>;
+const INFRA_SERVICES = [
+  { host: "tailscale", name: "Tailscale", desc: "VPN tunnel to homelab", label: "100.94.173.108" },
+];
+
+type ServiceStatus = { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] };
+type StatusMap = Record<string, ServiceStatus>;
 
 export default function Home() {
   const [status, setStatus] = useState<StatusMap>({});
@@ -26,7 +41,7 @@ export default function Home() {
   const fetchStatus = async () => {
     try {
       const res = await fetch("/api/status");
-      const data = await res.json();
+      const data: StatusMap = await res.json();
       setStatus(data);
     } catch {}
   };
@@ -42,7 +57,7 @@ export default function Home() {
       <AuroraBackground />
 
       {/* Hero */}
-      <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
+      <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 pointer-events-none">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,7 +68,7 @@ export default function Home() {
           <motion.svg
             viewBox="0 0 143.23 66.81"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-64 sm:w-80 md:w-[28rem] mb-8"
+            className="w-80 sm:w-96 md:w-[36rem] mb-8"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
@@ -71,7 +86,7 @@ export default function Home() {
               </g>
             </g>
           </motion.svg>
-          <TextGenerateEffect words="Infrastructure & Services" />
+          <TextGenerateEffect words="Max's Services" />
         </motion.div>
 
         <motion.div
@@ -90,33 +105,145 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Services */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 pb-24">
+      {/* Portfolio */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 pb-24 pointer-events-none">
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-3xl sm:text-4xl font-bold text-center mb-16 text-white"
+          className="text-2xl sm:text-3xl font-bold text-center mb-10 text-white"
         >
-          Services
+          Portfolio
         </motion.h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <PortfolioCard type="photo" />
+          <PortfolioCard type="video" />
+        </div>
+      </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {SERVICES.map((svc, i) => (
-            <ServiceCard
-              key={svc.host}
-              service={svc}
-              online={status[svc.host]}
-              index={i}
-            />
+      {/* Services */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 pb-24 space-y-20 pointer-events-none">
+        {CATEGORIES.map((cat, ci) => {
+          const globalOffset = CATEGORIES.slice(0, ci).reduce((a, c) => a + c.services.length, 0);
+          return (
+            <div key={cat.title}>
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl font-bold text-center mb-10 text-white"
+              >
+                {cat.title}
+              </motion.h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {cat.services.map((svc, i) => (
+                  <ServiceCard
+                    key={svc.host}
+                    service={svc}
+                    status={status[svc.host]}
+                    pingHistory={status[svc.host]?.history}
+                    index={globalOffset + i}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Friends & Partners */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 pb-24 pointer-events-none">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-2xl sm:text-3xl font-bold text-center mb-10 text-white"
+        >
+          Friends & Partners
+        </motion.h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[
+            { name: "Logge", url: "https://lmf.logge.top", host: "lmf.logge.top", icon: "https://lmf.logge.top/images/Logo.png", bright: true },
+            { name: "Max", url: "https://buffbolzen.com", host: "buffbolzen.com", emoji: "🛒" },
+            { name: "Jonas", url: "https://jb-studio.net", host: "jb-studio.net", icon: "https://jb-studio.net/images/logo-clean.png" },
+            { name: "Julian", url: "https://jupeters.de", host: "jupeters.de", icon: "https://jupeters.de/assets/favicon/favicon-192.png" },
+            { name: "Kolping Ramsen", url: "https://kolpingtheater-ramsen.de", host: "kolpingtheater-ramsen.de", icon: "https://kolpingtheater-ramsen.de/img/logo.png" },
+          ].map((partner, i) => (
+            <motion.a
+              key={partner.url}
+              href={partner.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
+              whileHover={{ scale: 1.05, y: -3 }}
+              className="pointer-events-auto group block rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-4 text-center transition-colors hover:border-white/[0.15] hover:bg-white/[0.06] relative overflow-hidden"
+            >
+              {partner.emoji ? (
+                <span className="block text-2xl opacity-[0.3] group-hover:opacity-[0.6] transition-opacity mx-auto mb-3">
+                  {partner.emoji}
+                </span>
+              ) : partner.icon && (
+                <img
+                  src={partner.icon}
+                  alt=""
+                  className={`w-10 h-10 object-contain grayscale group-hover:opacity-[0.5] transition-opacity mx-auto mb-3 ${partner.bright ? "opacity-[0.5] invert group-hover:opacity-[0.7]" : "opacity-[0.25]"}`}
+                />
+              )}
+              <p className="text-white font-semibold text-sm mb-1">{partner.name}</p>
+              <p className="text-white/20 text-xs font-mono">{partner.host}</p>
+            </motion.a>
           ))}
         </div>
       </section>
 
+      {/* Network - smaller, separated */}
+      <section className="relative z-10 max-w-md mx-auto px-4 pb-16 pointer-events-none">
+        <div className="border-t border-white/[0.06] pt-12">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-xs text-white/20 uppercase tracking-[0.3em] text-center mb-6"
+          >
+            Network
+          </motion.p>
+          <div className="grid grid-cols-1 gap-4">
+            {INFRA_SERVICES.map((svc, i) => (
+              <ServiceCard
+                key={svc.host}
+                service={svc}
+                status={status[svc.host]}
+                pingHistory={status[svc.host]?.history}
+                index={i}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="relative z-10 text-center py-8 text-white/20 text-xs tracking-wider">
-        MX11 · {new Date().getFullYear()}
+      <footer className="relative z-10 text-center py-10 pointer-events-none">
+        <div className="flex justify-center gap-6 mb-4 pointer-events-auto">
+          <a href="mailto:info@mx11.org" className="text-white/30 hover:text-white/60 text-sm font-mono transition-colors">
+            info@mx11.org
+          </a>
+          <a href="mailto:max@mx11.org" className="text-white/30 hover:text-white/60 text-sm font-mono transition-colors">
+            max@mx11.org
+          </a>
+          <a href="https://instagram.com/max.htr" target="_blank" rel="noopener noreferrer" className="text-white/30 hover:text-white/60 text-sm font-mono transition-colors">
+            @max.htr
+          </a>
+        </div>
+        <p className="text-white/20 text-xs tracking-wider">
+          MX11 · {new Date().getFullYear()}
+        </p>
       </footer>
     </main>
   );
