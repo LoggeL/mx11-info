@@ -20,10 +20,13 @@ interface PelicanServer {
   name: string;
   node: string;
   status: string;
+  running?: boolean;
+  cpu?: number;
+  ram?: string | null;
+  uptime?: number;
   maxPlayers?: number | null;
   address?: string | null;
   map?: string | null;
-  description?: string | null;
   memoryLimit?: number | null;
   cpuLimit?: number | null;
 }
@@ -144,7 +147,7 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
                         </div>
                       ))
                     : (servers as PelicanServer[]).map((s) => {
-                        const isActive = s.status === "active";
+                        const isActive = s.running ?? s.status === "running";
                         const isSuspended = s.status === "suspended";
                         return (
                           <div key={s.id} className="rounded-lg bg-white/[0.04] border border-white/[0.06] p-3">
@@ -153,8 +156,8 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
                                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isActive ? "bg-emerald-400" : isSuspended ? "bg-yellow-400/60" : "bg-white/20"}`} />
                                 <span className="text-white/80 text-sm font-medium truncate">{s.name}</span>
                               </div>
-                              <span className={`text-xs font-mono flex-shrink-0 ${isActive ? "text-emerald-400/60" : isSuspended ? "text-yellow-400/40" : "text-white/20"}`}>
-                                {s.status}
+                              <span className={`text-xs font-mono flex-shrink-0 ${isActive ? "text-emerald-400/60" : isSuspended ? "text-yellow-400/40" : "text-red-400/40"}`}>
+                                {isActive ? "online" : isSuspended ? "suspended" : s.status === "unknown" ? "unknown" : "offline"}
                               </span>
                             </div>
                             <div className="flex flex-wrap gap-3 mt-1.5 ml-3.5">
@@ -173,7 +176,13 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
                               {s.map && (
                                 <span className="text-white/20 text-xs font-mono capitalize">{s.map}</span>
                               )}
-                              {s.memoryLimit != null && (
+                              {isActive && s.cpu != null && (
+                                <span className="text-white/30 text-xs font-mono">CPU {s.cpu.toFixed(1)}%</span>
+                              )}
+                              {isActive && s.ram && (
+                                <span className="text-white/30 text-xs font-mono">RAM {s.ram}</span>
+                              )}
+                              {!isActive && s.memoryLimit != null && (
                                 <span className="text-white/20 text-xs font-mono">{s.memoryLimit >= 1024 ? `${(s.memoryLimit / 1024).toFixed(0)}GB` : `${s.memoryLimit}MB`} RAM limit</span>
                               )}
                             </div>
