@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TextGenerateEffect } from "@/components/TextGenerateEffect";
 import { ServiceCard } from "@/components/ServiceCard";
-import { PortfolioCard } from "@/components/PortfolioCard";
+import Link from "next/link";
+import { PanelCard } from "@/components/PanelCard";
 
 const CATEGORIES = [
   {
@@ -16,15 +17,11 @@ const CATEGORIES = [
     ],
   },
   {
-    title: "Minecraft",
+    title: "Games",
     services: [
-      { host: "bedrock.mx11.org", name: "Bedrock", desc: "Bedrock Edition server", copy: "bedrock.mx11.org" },
-      { host: "java.mx11.org", name: "Java", desc: "Java Edition server", copy: "java.mx11.org" },
-      { host: "modpack.mx11.org", name: "Modpack", desc: "Custom modpack server", copy: "modpack.mx11.org" },
-      { host: "create.mx11.org", name: "Create", desc: "Create modpack server", copy: "create.mx11.org" },
-      { host: "crafty.mx11.org", name: "Crafty", desc: "Server management panel" },
-      { host: "map.mx11.org", name: "Dynmap", desc: "Live world map" },
+      { host: "map.mx11.org", name: "Dynmap", desc: "Live world map", tag: "Minecraft" },
     ],
+    panels: ["crafty", "pelican"] as const,
   },
 ];
 
@@ -117,8 +114,20 @@ export default function Home() {
           Portfolio
         </motion.h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <PortfolioCard type="photo" />
-          <PortfolioCard type="video" />
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.5 }}>
+            <Link href="/portfolio/photos" className="group block rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden pointer-events-auto transition-colors hover:border-white/[0.15] hover:bg-white/[0.06] p-5">
+              <h3 className="text-white font-semibold text-base mb-1">📸 Photo Portfolio</h3>
+              <p className="text-white/40 text-sm">Photography showcase</p>
+              <p className="text-white/20 text-xs mt-2 font-mono group-hover:text-white/40 transition-colors">click to browse →</p>
+            </Link>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <Link href="/portfolio/videos" className="group block rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden pointer-events-auto transition-colors hover:border-white/[0.15] hover:bg-white/[0.06] p-5">
+              <h3 className="text-white font-semibold text-base mb-1">🎬 Video Portfolio</h3>
+              <p className="text-white/40 text-sm">Videography showcase</p>
+              <p className="text-white/20 text-xs mt-2 font-mono group-hover:text-white/40 transition-colors">click to browse →</p>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
@@ -146,6 +155,9 @@ export default function Home() {
                     pingHistory={status[svc.host]?.history}
                     index={globalOffset + i}
                   />
+                ))}
+                {"panels" in cat && (cat as any).panels.map((p: "crafty" | "pelican") => (
+                  <PanelCard key={p} panel={p} />
                 ))}
               </div>
             </div>

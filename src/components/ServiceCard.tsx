@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 type ServiceStatus = { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] };
 
 interface Props {
-  service: { host: string; name: string; desc: string; copy?: string; label?: string };
+  service: { host: string; name: string; desc: string; copy?: string; label?: string; tag?: string };
   status?: ServiceStatus;
   pingHistory?: number[];
   index: number;
@@ -76,9 +76,14 @@ export function ServiceCard({ service, status, pingHistory, index }: Props) {
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-white font-semibold text-base mb-1 truncate">
-            {service.name}
-          </h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-white font-semibold text-base truncate">{service.name}</h3>
+            {service.tag && (
+              <span className="flex-shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.08] text-white/40 border border-white/[0.08]">
+                {service.tag}
+              </span>
+            )}
+          </div>
           <p className="text-white/40 text-sm leading-relaxed">{service.desc}</p>
           {players && online && (
             <p className="text-emerald-400/70 text-xs mt-1 font-mono">
