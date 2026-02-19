@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 const PELICAN_URL = "https://pelican.mx11.org";
 const PELICAN_APP_KEY = "[REMOVED_SECRET]";
+const PELICAN_CLIENT_KEY = "[REMOVED_SECRET]";
 
 const CRAFTY_URL = "https://crafty.mx11.org";
 const CRAFTY_KEY = "[REMOVED_SECRET]";
@@ -27,7 +28,7 @@ async function fetchPelicanServers() {
       nodeMap[n.attributes.id] = n.attributes.name;
     }
 
-    return servers.map((s: any) => {
+    return Promise.all(servers.map(async (s: any) => {
       const env = s.attributes.container?.environment ?? {};
       const allocs = s.attributes.relationships?.allocations?.data ?? [];
       const primaryAlloc = allocs[0]?.attributes;
@@ -39,19 +40,40 @@ async function fetchPelicanServers() {
       const mapMatch = mapPath.match(/\/levels\/([^/]+)\//);
       const mapName = mapMatch ? mapMatch[1].replace(/_/g, " ") : null;
 
+      // Fetch live resources via client API
+      let liveState = "unknown";
+      let liveCpu = 0;
+      let liveRamBytes = 0;
+      let liveUptime = 0;
+      try {
+        const resRes = await fetch(`${PELICAN_URL}/api/client/servers/${s.attributes.identifier}/resources`, {
+          headers: { Authorization: `Bearer ${PELICAN_CLIENT_KEY}`, Accept: "application/json" },
+          cache: "no-store",
+        });
+        const resData = await resRes.json();
+        const attrs = resData.attributes ?? {};
+        liveState = attrs.current_state ?? "unknown";
+        liveCpu = attrs.resources?.cpu_absolute ?? 0;
+        liveRamBytes = attrs.resources?.memory_bytes ?? 0;
+        liveUptime = attrs.resources?.uptime ?? 0;
+      } catch { /* ignore */ }
+
       return {
         id: s.attributes.uuid,
         name: s.attributes.name,
         node: nodeMap[s.attributes.node] ?? `Node ${s.attributes.node}`,
-        status: s.attributes.status === null && !s.attributes.suspended ? "active" : (s.attributes.suspended ? "suspended" : s.attributes.status ?? "unknown"),
+        status: liveState,
+        running: liveState === "running",
+        cpu: parseFloat(liveCpu.toFixed(2)),
+        ram: liveRamBytes > 0 ? `${(liveRamBytes / 1024 / 1024).toFixed(0)}MB` : null,
+        uptime: liveUptime,
         maxPlayers: env.MAX_PLAYERS ? parseInt(env.MAX_PLAYERS) : null,
         address: port ? `${alias}:${port}` : null,
         map: mapName,
-        description: env.DESCRIPTION && env.DESCRIPTION !== "BeamMP Default Description" ? env.DESCRIPTION : null,
         memoryLimit: s.attributes.limits?.memory ?? null,
         cpuLimit: s.attributes.limits?.cpu ?? null,
       };
-    });
+    }));
   } catch {
     return [];
   }
