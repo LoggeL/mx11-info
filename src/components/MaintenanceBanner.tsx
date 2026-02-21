@@ -32,12 +32,13 @@ function getState(): { state: State; ms: number } {
   return { state: "normal", ms: next.getTime() - now.getTime() };
 }
 
-function fmt(ms: number) {
+function fmt(ms: number, short = false) {
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m`;
+  if (short && h > 0) return `${h}h ${String(m).padStart(2, "0")}m`;
+  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m ${String(sec).padStart(2, "0")}s`;
   return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
@@ -64,7 +65,13 @@ export function MaintenanceIndicator() {
                           "Next maintenance";
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 flex items-center justify-between gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.5 }}
+      className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 flex items-center justify-between gap-3"
+    >
       <div className="flex items-center gap-2">
         <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot}`} />
         <span className="text-white/40 text-xs font-mono">{label}</span>
@@ -76,7 +83,7 @@ export function MaintenanceIndicator() {
       }`}>
         {state === "active" ? `ends in ${fmt(ms)}` : fmt(ms)}
       </span>
-    </div>
+    </motion.div>
   );
 }
 
@@ -123,7 +130,7 @@ export function MaintenanceBanner() {
             <span className={`text-sm font-mono font-bold tabular-nums flex-shrink-0 ${
               info.state === "active" ? "text-red-300" : "text-yellow-300"
             }`}>
-              {info.state === "active" ? `~${fmt(info.ms)}` : fmt(info.ms)}
+              {info.state === "active" ? `~${fmt(info.ms, true)}` : fmt(info.ms, true)}
             </span>
           </div>
         </motion.div>
