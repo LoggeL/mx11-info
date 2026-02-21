@@ -73,11 +73,18 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-white font-semibold text-base mb-1">
-              {isCrafty ? "Crafty" : "Pelican"}
-            </h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-white font-semibold text-base">
+                {isCrafty ? "Crafty" : "Pelican"}
+              </h3>
+              {isCrafty && (
+                <span className="flex-shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.08] text-white/40 border border-white/[0.08]">
+                  Minecraft
+                </span>
+              )}
+            </div>
             <p className="text-white/40 text-sm">
-              {isCrafty ? "Server management panel" : "Game server management"}
+              {isCrafty ? "Minecraft server management panel" : "Game server management"}
             </p>
             <p className="text-white/20 text-xs mt-2 font-mono">
               {expanded ? "click to close" : "click to view servers"}
