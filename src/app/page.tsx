@@ -7,6 +7,7 @@ import { TextGenerateEffect } from "@/components/TextGenerateEffect";
 import { ServiceCard } from "@/components/ServiceCard";
 import Link from "next/link";
 import { PanelCard } from "@/components/PanelCard";
+import { MaintenanceBanner, MaintenanceIndicator } from "@/components/MaintenanceBanner";
 
 const CATEGORIES = [
   {
@@ -51,6 +52,7 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
+      <MaintenanceBanner />
       <AuroraBackground />
 
       {/* Hero */}
@@ -236,6 +238,7 @@ export default function Home() {
                 index={i}
               />
             ))}
+            <MaintenanceIndicator />
           </div>
         </div>
       </section>
