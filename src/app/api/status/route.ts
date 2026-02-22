@@ -22,6 +22,17 @@ const MC_SERVERS = [
 const MAX_HISTORY = 20;
 const pingHistory: Record<string, number[]> = {};
 
+async function checkICMP(ip: string): Promise<{ online: boolean; ping: number | null }> {
+  return new Promise((resolve) => {
+    const { exec } = require("child_process");
+    exec(`ping -c 1 -W 2 ${ip}`, (error: any, stdout: string) => {
+      if (error) return resolve({ online: false, ping: null });
+      const match = stdout.match(/time=(\d+\.?\d*)\s*ms/);
+      resolve({ online: true, ping: match ? Math.round(parseFloat(match[1])) : null });
+    });
+  });
+}
+
 async function checkTCP(ip: string, port: number, timeoutMs = 4000): Promise<{ online: boolean; ping: number | null }> {
   const start = performance.now();
   return new Promise((resolve) => {
@@ -157,7 +168,7 @@ export async function GET() {
     Promise.all(HTTP_SERVICES.map(async (host) => [host, await checkHttp(host)] as const)),
     Promise.all(MC_SERVERS.map(async (srv) => [srv.host, await checkMc(srv)] as const)),
     checkTailscale(),
-    checkTCP("100.110.39.105", 9443),
+    checkICMP("100.110.39.105"),
   ]);
 
   const status: Record<string, { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] }> = {};
