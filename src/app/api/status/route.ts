@@ -157,7 +157,7 @@ export async function GET() {
     Promise.all(HTTP_SERVICES.map(async (host) => [host, await checkHttp(host)] as const)),
     Promise.all(MC_SERVERS.map(async (srv) => [srv.host, await checkMc(srv)] as const)),
     checkTailscale(),
-    checkTCP("100.110.39.105", 22),
+    checkTCP("100.110.39.105", 9443),
   ]);
 
   const status: Record<string, { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] }> = {};
