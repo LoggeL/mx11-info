@@ -48,34 +48,7 @@ async function checkTCP(ip: string, port: number, timeoutMs = 4000): Promise<{ o
 }
 
 async function checkTailscale(): Promise<{ online: boolean; ping: number | null }> {
-  // TCP connect to a known open port to measure tunnel latency
-  // Container can't reach Tailscale IPs directly, so use HTTP timing to immich as proxy
-  const start = performance.now();
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch("http://100.94.173.108:8080", {
-      method: "HEAD",
-      signal: controller.signal,
-      redirect: "manual",
-    });
-    clearTimeout(timeout);
-    const ping = Math.round(performance.now() - start);
-    return { online: true, ping };
-  } catch {
-    // Fallback: try via hostname (goes through Traefik → Tailscale)
-    const start2 = performance.now();
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-      await fetch("https://immich.mx11.org", { method: "HEAD", signal: controller.signal, redirect: "manual" });
-      clearTimeout(timeout);
-      const ping = Math.round(performance.now() - start2);
-      return { online: true, ping };
-    } catch {
-      return { online: false, ping: null };
-    }
-  }
+  return checkICMP("100.94.173.108");
 }
 
 async function checkHttp(host: string) {
