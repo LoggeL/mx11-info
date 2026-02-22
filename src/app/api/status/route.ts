@@ -22,6 +22,20 @@ const MC_SERVERS = [
 const MAX_HISTORY = 20;
 const pingHistory: Record<string, number[]> = {};
 
+async function checkTCP(ip: string, port: number, timeoutMs = 4000): Promise<{ online: boolean; ping: number | null }> {
+  const start = performance.now();
+  return new Promise((resolve) => {
+    const socket = createConnection({ host: ip, port });
+    const timer = setTimeout(() => { socket.destroy(); resolve({ online: false, ping: null }); }, timeoutMs);
+    socket.on("connect", () => {
+      clearTimeout(timer);
+      socket.destroy();
+      resolve({ online: true, ping: Math.round(performance.now() - start) });
+    });
+    socket.on("error", () => { clearTimeout(timer); resolve({ online: false, ping: null }); });
+  });
+}
+
 async function checkTailscale(): Promise<{ online: boolean; ping: number | null }> {
   // TCP connect to a known open port to measure tunnel latency
   // Container can't reach Tailscale IPs directly, so use HTTP timing to immich as proxy
@@ -139,10 +153,11 @@ function recordPing(host: string, ping: number | null) {
 }
 
 export async function GET() {
-  const [httpResults, mcResults, tsResult] = await Promise.all([
+  const [httpResults, mcResults, tsResult, ts2Result] = await Promise.all([
     Promise.all(HTTP_SERVICES.map(async (host) => [host, await checkHttp(host)] as const)),
     Promise.all(MC_SERVERS.map(async (srv) => [srv.host, await checkMc(srv)] as const)),
     checkTailscale(),
+    checkTCP("100.110.39.105", 22),
   ]);
 
   const status: Record<string, { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] }> = {};
@@ -158,6 +173,9 @@ export async function GET() {
 
   recordPing("tailscale", tsResult.ping);
   status["tailscale"] = { ...tsResult, history: [...pingHistory["tailscale"]] };
+
+  recordPing("tailscale2", ts2Result.ping);
+  status["tailscale2"] = { ...ts2Result, history: [...pingHistory["tailscale2"]] };
 
   return NextResponse.json(status, {
     headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
