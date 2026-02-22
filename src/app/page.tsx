@@ -27,8 +27,8 @@ const CATEGORIES = [
 ];
 
 const INFRA_SERVICES = [
-  { host: "tailscale", name: "Tailscale", desc: "VPN tunnel to homelab", label: "100.94.173.108" },
-  { host: "tailscale2", name: "Tailscale", desc: "VPN tunnel to node 2", label: "100.110.39.105" },
+  { host: "tailscale", name: "Alpha", desc: "VPN tunnel to homelab", label: "100.94.173.108" },
+  { host: "tailscale2", name: "Emergency", desc: "VPN tunnel to emergency node", label: "100.110.39.105" },
 ];
 
 type ServiceStatus = { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] };
