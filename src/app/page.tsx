@@ -15,6 +15,7 @@ const CATEGORIES = [
     services: [
       { host: "jellyfin.mx11.org", name: "Jellyfin", desc: "Stream movies, shows & music" },
       { host: "immich.mx11.org", name: "Immich", desc: "Photo & video backup" },
+      { host: "paperless.mx11.org", name: "Paperless", desc: "Document management & archive" },
     ],
   },
   {
