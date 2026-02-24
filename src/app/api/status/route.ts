@@ -10,6 +10,7 @@ const HTTP_SERVICES = [
   "map.mx11.org",
   "crafty.mx11.org",
   "jellyfin.mx11.org",
+  "paperless.mx11.org",
 ];
 
 const MC_SERVERS = [
