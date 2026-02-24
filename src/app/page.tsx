@@ -8,6 +8,8 @@ import { ServiceCard } from "@/components/ServiceCard";
 import Link from "next/link";
 import { PanelCard } from "@/components/PanelCard";
 import { MaintenanceBanner, MaintenanceIndicator } from "@/components/MaintenanceBanner";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { AdminPanel } from "@/components/AdminPanel";
 
 const CATEGORIES = [
   {
@@ -54,6 +56,7 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
+      <AnnouncementBanner />
       <MaintenanceBanner />
       <AuroraBackground />
 
@@ -261,6 +264,9 @@ export default function Home() {
         <p className="text-white/20 text-xs tracking-wider">
           MX11 · {new Date().getFullYear()}
         </p>
+        <div className="mt-3 pointer-events-auto">
+          <AdminPanel />
+        </div>
       </footer>
     </main>
   );
