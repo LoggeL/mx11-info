@@ -72,6 +72,7 @@ async function fetchPelicanServers() {
         map: mapName,
         memoryLimit: s.attributes.limits?.memory ?? null,
         cpuLimit: s.attributes.limits?.cpu ?? null,
+        panelUrl: `${PELICAN_URL}/server/${s.attributes.identifier}`,
       };
     }));
   } catch {
@@ -108,9 +109,10 @@ async function fetchCraftyServers() {
             ram: d.mem ?? "0",
             version: d.version ?? "",
             address: `mx11.org:${s.server_port}`,
+            panelUrl: `${CRAFTY_URL}/panel/server/${s.server_id}/dashboard`,
           };
         } catch {
-          return { id: s.server_id, name: s.server_name, running: false, players: 0, maxPlayers: 0, cpu: 0, ram: "0", address: `mx11.org:${s.server_port}` };
+          return { id: s.server_id, name: s.server_name, running: false, players: 0, maxPlayers: 0, cpu: 0, ram: "0", address: `mx11.org:${s.server_port}`, panelUrl: `${CRAFTY_URL}/panel/server/${s.server_id}/dashboard` };
         }
       })
     );

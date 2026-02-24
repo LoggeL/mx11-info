@@ -13,6 +13,7 @@ interface CraftyServer {
   ram: string;
   address?: string;
   version?: string;
+  panelUrl?: string;
 }
 
 interface PelicanServer {
@@ -29,6 +30,7 @@ interface PelicanServer {
   map?: string | null;
   memoryLimit?: number | null;
   cpuLimit?: number | null;
+  panelUrl?: string | null;
 }
 
 interface PanelData {
@@ -148,9 +150,14 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
                               )}
                             </div>
                           </div>
-                          <span className={`text-xs font-mono flex-shrink-0 ${s.running ? "text-emerald-400/60" : "text-red-400/40"}`}>
-                            {s.running ? "online" : "offline"}
-                          </span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className={`text-xs font-mono ${s.running ? "text-emerald-400/60" : "text-red-400/40"}`}>
+                              {s.running ? "online" : "offline"}
+                            </span>
+                            {s.panelUrl && (
+                              <a href={s.panelUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-white/20 hover:text-white/60 transition-colors text-xs" title="Open in panel">↗</a>
+                            )}
+                          </div>
                         </div>
                       ))
                     : (servers as PelicanServer[]).map((s) => {
@@ -163,9 +170,14 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
                                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isActive ? "bg-emerald-400" : isSuspended ? "bg-yellow-400/60" : "bg-white/20"}`} />
                                 <span className="text-white/80 text-sm font-medium truncate">{s.name}</span>
                               </div>
-                              <span className={`text-xs font-mono flex-shrink-0 ${isActive ? "text-emerald-400/60" : isSuspended ? "text-yellow-400/40" : "text-red-400/40"}`}>
-                                {isActive ? "online" : isSuspended ? "suspended" : s.status === "unknown" ? "unknown" : "offline"}
-                              </span>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className={`text-xs font-mono ${isActive ? "text-emerald-400/60" : isSuspended ? "text-yellow-400/40" : "text-red-400/40"}`}>
+                                  {isActive ? "online" : isSuspended ? "suspended" : s.status === "unknown" ? "unknown" : "offline"}
+                                </span>
+                                {s.panelUrl && (
+                                  <a href={s.panelUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-white/20 hover:text-white/60 transition-colors text-xs" title="Open in panel">↗</a>
+                                )}
+                              </div>
                             </div>
                             <div className="flex flex-wrap gap-3 mt-1.5 ml-3.5">
                               <span className="text-white/20 text-xs font-mono">{s.node}</span>
