@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "@/components/Animate";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TextGenerateEffect } from "@/components/TextGenerateEffect";
 import { ServiceCard } from "@/components/ServiceCard";
@@ -38,6 +38,7 @@ import type { StatusMap } from "@/lib/contracts";
 
 export default function Home() {
   const [status, setStatus] = useState<StatusMap>({});
+  const [year] = useState(() => new Date().getFullYear());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -262,7 +263,7 @@ export default function Home() {
           </a>
         </div>
         <p className="text-white/20 text-xs tracking-wider">
-          MX11 · {new Date().getFullYear()}
+          MX11 · {year}
         </p>
         <div className="mt-3 pointer-events-auto">
           <AdminPanel />

@@ -10,6 +10,7 @@ export function AuroraBackground() {
   const raf = useRef<number>(0);
 
   const draw = useCallback(function drawFrame() {
+    raf.current = 0;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -76,35 +77,40 @@ export function AuroraBackground() {
       }
     }
 
-    raf.current = requestAnimationFrame(drawFrame);
+    if (ripples.current.length) raf.current = requestAnimationFrame(drawFrame);
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const schedule = () => { if (!raf.current) raf.current = requestAnimationFrame(draw); };
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      schedule();
     };
     resize();
     window.addEventListener("resize", resize);
 
     const onMove = (e: MouseEvent) => {
       mouse.current = { x: e.clientX, y: e.clientY };
+      schedule();
     };
     const onLeave = () => {
       mouse.current = { x: -1, y: -1 };
+      schedule();
     };
     const onClick = (e: MouseEvent) => {
       ripples.current.push({ cx: e.clientX, cy: e.clientY, t: performance.now() });
+      schedule();
     };
 
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("mouseleave", onLeave);
     canvas.addEventListener("click", onClick);
 
-    raf.current = requestAnimationFrame(draw);
+    schedule();
 
     return () => {
       window.removeEventListener("resize", resize);

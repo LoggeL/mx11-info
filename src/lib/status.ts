@@ -2,8 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { cachedLoader } from "./cache";
 import type { StatusMap } from "./contracts";
-import { status as statusJava, statusBedrock } from "minecraft-server-util";
-import { createConnection } from "net";
+import { statusJava, statusBedrock, statusLegacy } from "./minecraft";
 
 const execute = promisify(execFile);
 const primaryHost = process.env.MX11_PRIMARY_HOST || "100.94.173.108";
@@ -56,39 +55,12 @@ async function checkHttp(host: string) {
   }
 }
 
-function checkLegacyPing(ip: string, port: number): Promise<{ online: boolean; ping: number | null; players?: { current: number; max: number } }> {
-  return new Promise((resolve) => {
-    const start = performance.now();
-    const chunks: Buffer[] = [];
-    const sock = createConnection({ host: ip, port, timeout: 5000 }, () => {
-      sock.write(Buffer.from([0xFE, 0x01]));
-    });
-    sock.on("data", (data) => chunks.push(data));
-    sock.on("end", () => {
-      const ping = Math.round(performance.now() - start);
-      try {
-        const buf = Buffer.concat(chunks);
-        // Skip first 3 bytes (0xFF + uint16BE length), payload is UTF-16BE
-        const payload = buf.slice(3).swap16().toString("utf16le");
-        const parts = payload.split("\0");
-        // Format: §1\0PROTOCOL\0VERSION\0MOTD\0CURRENT\0MAX
-        const current = parseInt(parts[parts.length - 2]) || 0;
-        const max = parseInt(parts[parts.length - 1]) || 0;
-        resolve({ online: true, ping, players: { current, max } });
-      } catch {
-        resolve({ online: true, ping });
-      }
-    });
-    sock.on("error", () => { sock.destroy(); resolve({ online: false, ping: null }); });
-    sock.on("timeout", () => { sock.destroy(); resolve({ online: false, ping: null }); });
-  });
-}
-
 async function checkMc(server: (typeof MC_SERVERS)[number]) {
   const start = performance.now();
   try {
     if (server.type === "legacy") {
-      return await checkLegacyPing(server.ip, server.port);
+      const res = await statusLegacy(server.ip, server.port, { timeout: 5000 });
+      return { online: true, ping: Math.round(performance.now() - start), players: { current: res.players.online, max: res.players.max } };
     } else if (server.type === "bedrock") {
       const res = await statusBedrock(server.ip, server.port, { timeout: 5000 });
       const ping = Math.round(performance.now() - start);

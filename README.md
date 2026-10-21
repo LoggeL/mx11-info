@@ -45,3 +45,20 @@ The status API shares a 15-second snapshot and in-flight probes between visitors
 Panel snapshots refresh every 30 seconds while their card is open.
 In-memory caches and login/session state are scoped to a single application process;
 use one replica unless these stores are replaced with shared infrastructure.
+
+## Lean implementation
+
+Runtime dependencies are limited to Next.js, React and React DOM. Oxlint replaces the
+ESLint plugin tree. Java, legacy Java and Bedrock player-count probes use bounded native
+Node.js TCP/UDP requests; RCON, MOTD formatting and unused query features are omitted.
+
+The existing design is materialized as ordinary CSS in `src/app/design.css`.
+There is no Tailwind/PostCSS generation step. Existing utility class names are retained;
+when adding a new class, add its CSS rule directly. Responsive rules and hover styles
+remain in that stylesheet. Project-specific rules live in `globals.css`.
+
+`src/components/Animate.tsx` supports the small animation vocabulary used by this site
+through browser Web Animations and IntersectionObserver. Keep its scope narrow rather
+than rebuilding a general animation framework. Entry, exit, hover, repeated keyframes
+and expanding panels are supported, with reduced-motion preferences respected.
+The canvas background repaints only for input, resize or an active ripple.

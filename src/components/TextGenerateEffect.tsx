@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "@/components/Animate";
 
 export function TextGenerateEffect({ words }: { words: string }) {
   const chars = words.split("");

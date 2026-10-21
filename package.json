@@ -6,14 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "oxlint --deny-warnings",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "framer-motion": "^14.5.0",
-    "minecraft-server-util": "^5.4.4",
     "next": "^16.4.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
@@ -22,11 +20,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "autoprefixer": "^10.6.1",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "^16.4.2",
-    "postcss": "^8.5.31",
-    "tailwindcss": "3.4",
+    "oxlint": "^1.89.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },
