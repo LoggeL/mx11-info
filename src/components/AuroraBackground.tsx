@@ -9,7 +9,7 @@ export function AuroraBackground() {
   const mouse = useRef<{ x: number; y: number }>({ x: -1, y: -1 });
   const raf = useRef<number>(0);
 
-  const draw = useCallback(() => {
+  const draw = useCallback(function drawFrame() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -76,7 +76,7 @@ export function AuroraBackground() {
       }
     }
 
-    raf.current = requestAnimationFrame(draw);
+    raf.current = requestAnimationFrame(drawFrame);
   }, []);
 
   useEffect(() => {

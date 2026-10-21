@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-type ServiceStatus = { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] };
+import type { ServiceStatus } from "@/lib/contracts";
 
 interface Props {
   service: { host: string; name: string; desc: string; copy?: string; label?: string; tag?: string };

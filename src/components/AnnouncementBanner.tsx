@@ -3,14 +3,25 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface Announcement { message: string; type: "info" | "warning" | "error"; createdAt: number; }
+import type { Announcement } from "@/lib/contracts";
 
 export function AnnouncementBanner() {
   const [ann, setAnn] = useState<Announcement | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin").then(r => r.json()).then(d => setAnn(d.announcement)).catch(() => {});
+    const controller = new AbortController();
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/admin", { signal: controller.signal });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!controller.signal.aborted) setAnn(data.announcement);
+      } catch { /* Leave the last successful announcement visible. */ }
+    };
+    void refresh();
+    const interval = setInterval(() => void refresh(), 30_000);
+    return () => { controller.abort(); clearInterval(interval); };
   }, []);
 
   const colors = {

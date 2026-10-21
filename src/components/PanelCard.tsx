@@ -3,40 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface CraftyServer {
-  id: string;
-  name: string;
-  running: boolean;
-  players: number;
-  maxPlayers: number;
-  cpu: number;
-  ram: string;
-  address?: string;
-  version?: string;
-  panelUrl?: string;
-}
-
-interface PelicanServer {
-  id: string;
-  name: string;
-  node: string;
-  status: string;
-  running?: boolean;
-  cpu?: number;
-  ram?: string | null;
-  uptime?: number;
-  maxPlayers?: number | null;
-  address?: string | null;
-  map?: string | null;
-  memoryLimit?: number | null;
-  cpuLimit?: number | null;
-  panelUrl?: string | null;
-}
-
-interface PanelData {
-  pelican: PelicanServer[];
-  crafty: CraftyServer[];
-}
+import type { CraftyServer, PelicanServer, PanelData } from "@/lib/contracts";
 
 export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
   const isCrafty = panel === "crafty";
@@ -53,13 +20,22 @@ export function PanelCard({ panel }: { panel: "crafty" | "pelican" }) {
   };
 
   useEffect(() => {
-    if (!expanded || data) return;
-    setLoading(true);
-    fetch("/api/panel-status")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [expanded, data]);
+    if (!expanded) return;
+    const controller = new AbortController();
+    const refresh = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/panel-status", { signal: controller.signal });
+        if (!response.ok) return;
+        const snapshot: PanelData = await response.json();
+        if (!controller.signal.aborted) setData(snapshot);
+      } catch { /* Keep the last successful snapshot during a temporary outage. */ }
+      finally { if (!controller.signal.aborted) setLoading(false); }
+    };
+    void refresh();
+    const interval = setInterval(() => void refresh(), 30_000);
+    return () => { controller.abort(); clearInterval(interval); };
+  }, [expanded]);
 
   const servers = isCrafty ? (data?.crafty ?? []) : (data?.pelican ?? []);
 

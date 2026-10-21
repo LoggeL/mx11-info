@@ -34,24 +34,24 @@ const INFRA_SERVICES = [
   { host: "tailscale2", name: "Emergency", desc: "VPN tunnel to emergency node", label: "100.110.39.105" },
 ];
 
-type ServiceStatus = { online: boolean; ping: number | null; players?: { current: number; max: number }; history: number[] };
-type StatusMap = Record<string, ServiceStatus>;
+import type { StatusMap } from "@/lib/contracts";
 
 export default function Home() {
   const [status, setStatus] = useState<StatusMap>({});
 
-  const fetchStatus = async () => {
-    try {
-      const res = await fetch("/api/status");
-      const data: StatusMap = await res.json();
-      setStatus(data);
-    } catch {}
-  };
-
   useEffect(() => {
-    fetchStatus();
-    const iv = setInterval(fetchStatus, 30000);
-    return () => clearInterval(iv);
+    const controller = new AbortController();
+    const refresh = async () => {
+      try {
+        const res = await fetch("/api/status", { signal: controller.signal });
+        if (!res.ok) return;
+        const data: StatusMap = await res.json();
+        if (!controller.signal.aborted) setStatus(data);
+      } catch { /* Preserve the last snapshot if the network is unavailable. */ }
+    };
+    void refresh();
+    const interval = setInterval(() => void refresh(), 30_000);
+    return () => { controller.abort(); clearInterval(interval); };
   }, []);
 
   return (
@@ -163,7 +163,7 @@ export default function Home() {
                     index={globalOffset + i}
                   />
                 ))}
-                {"panels" in cat && (cat as any).panels.map((p: "crafty" | "pelican") => (
+                {"panels" in cat && cat.panels?.map((p: "crafty" | "pelican") => (
                   <PanelCard key={p} panel={p} />
                 ))}
               </div>

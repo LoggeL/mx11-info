@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type AnnType = "info" | "warning" | "error";
-interface Announcement { message: string; type: AnnType; createdAt: number; }
+import type { Announcement, AnnouncementType as AnnType } from "@/lib/contracts";
 
 export function AdminPanel() {
   const [open, setOpen] = useState(false);
@@ -17,33 +16,55 @@ export function AdminPanel() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
 
-  const refresh = () =>
-    fetch("/api/admin").then(r => r.json()).then(d => { setAuthed(d.authed); setAnn(d.announcement); });
+  const refresh = useCallback(async () => {
+    const response = await fetch("/api/admin");
+    if (!response.ok) throw new Error("Admin service unavailable");
+    const data = await response.json();
+    setAuthed(data.authed); setAnn(data.announcement);
+  }, []);
 
-  useEffect(() => { if (open) refresh(); }, [open]);
+  useEffect(() => { if (open) void refresh().catch(() => setLoginError("Admin service unavailable")); }, [open, refresh]);
 
   const login = async () => {
     setLoginError("");
-    const r = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "login", password: pw }) });
-    if (r.ok) { setPw(""); refresh(); } else setLoginError("Wrong password");
+    try {
+      const response = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "login", password: pw }) });
+      if (!response.ok) {
+        const data = await response.json();
+        setLoginError(data.error || "Login failed");
+        return;
+      }
+      setPw(""); await refresh();
+    } catch { setLoginError("Admin service unavailable"); }
   };
 
   const logout = async () => {
-    await fetch("/api/admin?action=logout", { method: "DELETE" });
-    setAuthed(false); setAnn(null);
+    try {
+      const response = await fetch("/api/admin?action=logout", { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      setAuthed(false); setAnn(null);
+    } catch { setFeedback("Logout failed"); }
   };
 
   const saveAnn = async () => {
     setSaving(true);
-    await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "announcement", message: msg, type }) });
-    await refresh();
-    setMsg(""); setFeedback("✓ saved"); setSaving(false);
+    try {
+      const response = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "announcement", message: msg, type }) });
+      if (!response.ok) throw new Error();
+      await refresh();
+      setMsg(""); setFeedback("✓ saved");
+    } catch { setFeedback("Save failed"); }
+    finally { setSaving(false); }
     setTimeout(() => setFeedback(""), 2000);
   };
 
   const clearAnn = async () => {
-    await fetch("/api/admin", { method: "DELETE" });
-    await refresh(); setFeedback("✓ cleared"); setTimeout(() => setFeedback(""), 2000);
+    try {
+      const response = await fetch("/api/admin", { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      await refresh(); setFeedback("✓ cleared");
+    } catch { setFeedback("Clear failed"); }
+    setTimeout(() => setFeedback(""), 2000);
   };
 
   const typeColors: Record<AnnType, string> = {
