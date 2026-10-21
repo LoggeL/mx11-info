@@ -1,18 +1,38 @@
 # MX11 Services Dashboard
 
-Next.js 16 and React 19 dashboard for Max's services, game servers and portfolio.
-The existing layout, CSS, logos and animation settings are preserved.
+Plain HTML, CSS and browser JavaScript with a small Node.js 24 server.
+There are **no npm dependencies**, including development dependencies, and no build step.
+The existing layout, CSS, logos, responsive rules and animation settings are preserved.
 
 ## Development
 
-Use Node.js 24 LTS and npm.
+Use Node.js 24 LTS. No package installation is required.
 
-1. Run `npm ci`.
-2. Copy `.env.example` to the ignored `.env.local` and configure only the integrations you use.
-3. Run `npm run dev`.
+1. Copy `.env.example` to the ignored `.env.local` and configure the integrations you use.
+2. Run `npm run dev`, or `node --watch --env-file-if-exists=.env.local server/index.js`.
 
-`npm run check` runs lint, type checks, isolated tests and the production build.
-`npm audit --omit=dev` checks production dependencies.
+`npm run check` checks JavaScript syntax, verifies the dependency-free manifest and runs
+isolated tests using Node's built-in test runner. `npm run build` is a compatibility alias
+for source checks; it does not generate an output directory. `npm audit` reports zero packages.
+
+## Implementation
+
+`public/` contains three complete HTML pages, stylesheets, SVGs and small native ES modules.
+The home page's service links and portfolio navigation work without JavaScript.
+Browser JavaScript updates status cards, expands server lists, manages announcements and
+admin access, opens photo/video lightboxes and draws the interactive background.
+Animations use Web Animations and IntersectionObserver and respect reduced motion.
+The canvas repaints only for input, resize or an active ripple.
+
+`public/design.css` preserves the original compiled utility rules. There is no CSS generator.
+When adding a new class, add its rule directly. Project-specific CSS lives in `globals.css`.
+The original Tailwind MIT license is retained in `docs/tailwind-license.txt`.
+
+`server/index.js` serves a fixed inventory of public files, supports gzip/Brotli and conditional
+requests, and routes `/api/*` requests using the standard Request and Response interfaces.
+Private server files, configuration and data are outside the public file inventory.
+Integration modules use native Node HTTP, fetch, crypto, TCP/UDP, filesystem and process APIs.
+The Network cards use the host OS's `ping` utility, included in the Alpine container.
 
 ## Configuration and security
 
@@ -31,34 +51,20 @@ GitHub may retain old commit views; ask GitHub Support for cached-view removal w
 
 ## Operations
 
-Build with `npm run build` and start with `npm start`, or build the Dockerfile.
-The container runs as an unprivileged user on Node.js 24.
-Pass secrets at runtime with your deployment's environment settings; do not bake them into images.
+Run `npm start`, or `node --env-file-if-exists=.env.local server/index.js`.
+`PORT` defaults to 3000; `HOST` defaults to `0.0.0.0`.
+For Docker, build the Dockerfile and pass secrets at runtime. The container runs as UID 1001
+on Node.js 24 and performs no npm installation or framework build.
 
 Mount a persistent volume at `/app/data` (owned by UID 1001), or set `MX11_DATA_DIR` to a
 writable persistent directory. Announcements survive restarts; admin sessions do not.
 Sessions expire on the server after eight hours. Login attempts are limited to ten per
 five minutes per application process. Configure additional limits at the reverse proxy
 for multi-instance deployments. Set `APP_ORIGIN` if the proxy changes the request host.
+Production admin cookies require HTTPS (`NODE_ENV=production`). Admin request bodies are
+limited to 16 KiB, and cross-origin mutations are rejected.
 
 The status API shares a 15-second snapshot and in-flight probes between visitors.
 Panel snapshots refresh every 30 seconds while their card is open.
 In-memory caches and login/session state are scoped to a single application process;
 use one replica unless these stores are replaced with shared infrastructure.
-
-## Lean implementation
-
-Runtime dependencies are limited to Next.js, React and React DOM. Oxlint replaces the
-ESLint plugin tree. Java, legacy Java and Bedrock player-count probes use bounded native
-Node.js TCP/UDP requests; RCON, MOTD formatting and unused query features are omitted.
-
-The existing design is materialized as ordinary CSS in `src/app/design.css`.
-There is no Tailwind/PostCSS generation step. Existing utility class names are retained;
-when adding a new class, add its CSS rule directly. Responsive rules and hover styles
-remain in that stylesheet. Project-specific rules live in `globals.css`.
-
-`src/components/Animate.tsx` supports the small animation vocabulary used by this site
-through browser Web Animations and IntersectionObserver. Keep its scope narrow rather
-than rebuilding a general animation framework. Entry, exit, hover, repeated keyframes
-and expanding panels are supported, with reduced-motion preferences respected.
-The canvas background repaints only for input, resize or an active ripple.
