@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-const YOUTUBE_API_KEY = "[REMOVED_SECRET]";
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY ?? "";
 const PLAYLIST_ID = "PLk1k729BAyP8BTpDR4vCQYX81njLWVlgT";
 
 interface PlaylistItem {

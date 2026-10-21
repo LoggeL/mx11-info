@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
 const PELICAN_URL = "https://pelican.mx11.org";
-const PELICAN_APP_KEY = "[REMOVED_SECRET]";
-const PELICAN_CLIENT_KEY = "[REMOVED_SECRET]";
+const PELICAN_APP_KEY = process.env.PELICAN_APP_KEY ?? "";
+const PELICAN_CLIENT_KEY = process.env.PELICAN_CLIENT_KEY ?? "";
 
 const CRAFTY_URL = "https://crafty.mx11.org";
-const CRAFTY_KEY = "[REMOVED_SECRET]";
+const CRAFTY_KEY = process.env.CRAFTY_KEY ?? "";
 
 async function fetchPelicanServers() {
   try {

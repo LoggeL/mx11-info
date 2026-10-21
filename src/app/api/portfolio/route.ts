@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const SHARE_KEY = "[REMOVED_SECRET]";
+const SHARE_KEY = process.env.IMMICH_SHARE_KEY ?? "";
 const ALBUM_ID = "1c39edf6-9b96-45f1-b77b-99b25dc135c5";
 const IMMICH_URL = "https://immich.mx11.org";
 
