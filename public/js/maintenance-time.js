@@ -1,6 +1,9 @@
-export function maintenanceState(date = new Date()) {
+export function berlinSeconds(date = new Date()) {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(date).map(part => [part.type, part.value]));
-  const seconds = Number(parts.hour) * 3600 + Number(parts.minute) * 60 + Number(parts.second);
+  return Number(parts.hour) * 3600 + Number(parts.minute) * 60 + Number(parts.second);
+}
+export function maintenanceState(date = new Date()) {
+  const seconds = berlinSeconds(date);
   const state = seconds >= 23400 && seconds < 25200 ? 'active' : seconds >= 21600 && seconds < 23400 ? 'warning' : 'normal';
   return { state, ms: ((state === 'active' ? 25200 : 23400 + (seconds >= 25200 ? 86400 : 0)) - seconds) * 1000 };
 }

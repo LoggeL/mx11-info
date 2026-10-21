@@ -8,12 +8,13 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import * as admin from './routes/admin.js';
 import * as status from './routes/status.js';
+import * as overview from './routes/status-overview.js';
 import * as panels from './routes/panel-status.js';
 import * as photos from './routes/portfolio.js';
 import * as videos from './routes/videos.js';
 import * as asset from './routes/asset.js';
 
-const routes = new Map([['/api/admin', admin], ['/api/status', status], ['/api/panel-status', panels], ['/api/portfolio', photos], ['/api/videos', videos]]);
+const routes = new Map([['/api/admin', admin], ['/api/status', status], ['/api/status-overview', overview], ['/api/panel-status', panels], ['/api/portfolio', photos], ['/api/videos', videos]]);
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };
 const error = (message, code, headers = {}) => Response.json({ error: message }, { status: code, headers: { 'Cache-Control': 'no-store', ...headers } });
 const accepts = (header, name) => header.split(',').some(value => {

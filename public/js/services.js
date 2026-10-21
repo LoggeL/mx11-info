@@ -1,73 +1,102 @@
 import { element, escape, url, poll } from './dom.js';
 import { expand } from './animations.js';
 
-function sparkline(points) {
-  if (points.length < 2) return '';
-  const max = Math.max(...points, 1), step = 50 / (points.length - 1);
-  const d = points.map((p, i) => `${i ? 'L' : 'M'}${i * step},${20 - p / max * 14 - 3}`).join(' ');
-  return `<div data-sparkline class="absolute bottom-2 right-3 opacity-60"><svg viewBox="0 0 50 20" preserveAspectRatio="none" class="w-12 h-5"><defs><linearGradient id="msFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34d399" stop-opacity="0.3"/><stop offset="100%" stop-color="#34d399" stop-opacity="0"/></linearGradient></defs><path d="${d} L50,20 L0,20 Z" fill="url(#msFill)"/><path d="${d}" fill="none" stroke="#34d399" stroke-width="1" vector-effect="non-scaling-stroke" opacity="0.5"/></svg></div>`;
+const HTTP = ['jellyfin.mx11.org', 'immich.mx11.org', 'paperless.mx11.org', 'crafty.mx11.org'];
+const NODES = ['datacenter', 'tailscale', 'tailscale2'];
+const ms = ping => ping === 0 ? '<1ms' : `${ping}ms`;
+const setDot = (dot, tone) => { if (dot) dot.className = `dot${dot.classList.contains('dot--sm') ? ' dot--sm' : ''} dot--${tone}`; };
+
+function sparkline(svg, points) {
+  const values = (points || []).filter(Number.isFinite);
+  const max = Math.max(...values, 0);
+  if (values.length < 2 || max === 0) { svg.replaceChildren(); return; }
+  const step = 56 / (values.length - 1);
+  const d = values.map((p, i) => `${i ? 'L' : 'M'}${(i * step).toFixed(1)},${(17 - p / max * 13).toFixed(1)}`).join(' ');
+  svg.innerHTML = `<defs><linearGradient id="sf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".3"/><stop offset="1" stop-color="#34d399" stop-opacity="0"/></linearGradient></defs><path d="${d} L56,18 L0,18 Z" fill="url(#sf)"/><path d="${d}" fill="none" stroke="#34d399" stroke-width="1" vector-effect="non-scaling-stroke" opacity=".7"/>`;
 }
+
+function applyStatus(snapshot) {
+  for (const card of document.querySelectorAll('[data-service]')) {
+    const status = snapshot[card.dataset.service];
+    if (!status) continue;
+    const online = !!status.online;
+    card.classList.toggle('is-down', !online);
+    setDot(card.querySelector('[data-dot]'), online ? 'ok' : 'bad');
+    const state = card.querySelector('[data-state]');
+    if (state) state.textContent = online ? 'online' : 'offline';
+    const ping = card.querySelector('[data-ping]');
+    if (ping) ping.textContent = online && status.ping !== null ? ms(status.ping) : '';
+    const spark = card.querySelector('[data-spark]');
+    if (spark) sparkline(spark, online ? status.history : []);
+    card.querySelector('[data-players]')?.remove();
+    if (online && status.players) card.querySelector('.svc__desc')?.after(element(`<p data-players class="svc__players">${escape(status.players.current)}/${escape(status.players.max)} players</p>`));
+  }
+  for (const link of document.querySelectorAll('[data-link]')) {
+    const status = snapshot[link.dataset.link];
+    if (!status) continue;
+    link.classList.toggle('is-down', !status.online);
+    link.querySelector('[data-link-label]').textContent = status.online && status.ping !== null ? ms(status.ping) : 'no route';
+  }
+  const count = keys => [keys.filter(k => snapshot[k]?.online).length, keys.filter(k => snapshot[k]).length];
+  const [up, total] = count(HTTP), [nodesUp, nodes] = count(NODES);
+  if (!total) return;
+  setDot(document.querySelector('[data-uplink-dot]'), up === total && nodesUp === nodes ? 'ok' : 'warn');
+  document.querySelector('[data-uplink-services]').innerHTML = `<b>${up}/${total}</b> services online`;
+  document.querySelector('[data-uplink-nodes]').innerHTML = `<b>${nodesUp}/${nodes}</b> nodes`;
+}
+
 export function initServices() {
-  poll('/api/status', snapshot => {
-    for (const card of document.querySelectorAll('[data-service]')) {
-      const status = snapshot[card.dataset.service];
-      if (!status) continue;
-      const online = !!status.online;
-      card.classList.toggle('border-red-500/30', !online); card.classList.toggle('hover:border-red-500/50', !online);
-      card.classList.toggle('border-white/[0.08]', online); card.classList.toggle('hover:border-white/[0.15]', online);
-      const row = card.children[1], content = row.children[0], indicator = row.children[1];
-      indicator.replaceChildren(element(`<div class="relative"><div class="w-2.5 h-2.5 rounded-full ${online ? 'bg-emerald-400' : 'bg-red-400'}"></div>${online ? '<div class="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping opacity-30"></div>' : ''}</div>`));
-      content.querySelector('[data-players]')?.remove();
-      if (online && status.players) content.children[1].after(element(`<p data-players class="text-emerald-400/70 text-xs mt-1 font-mono">${escape(status.players.current)}/${escape(status.players.max)} players</p>`));
-      const labelRow = content.lastElementChild;
-      labelRow.querySelector('[data-ping]')?.remove();
-      if (online && status.ping !== null) labelRow.append(element(`<p data-ping class="text-white/30 text-xs font-mono flex-shrink-0">${escape(status.ping)}ms</p>`));
-      card.querySelector('[data-sparkline]')?.remove();
-      if (online && status.history?.length > 1) card.append(element(sparkline(status.history.filter(Number.isFinite))));
-    }
-  });
+  poll('/api/status', applyStatus);
   for (const card of document.querySelectorAll('[data-panel]')) initPanel(card);
 }
-const text = (value, classes = 'text-white/30 text-xs font-mono') => `<span class="${classes}">${escape(value)}</span>`;
-const address = s => s.address ? `<span data-copy="${escape(s.address)}" class="text-white/30 text-xs font-mono cursor-pointer hover:text-white/60 transition-colors">${escape(s.address)}</span>` : '';
-const link = s => s.panelUrl ? `<a href="${url(s.panelUrl)}" target="_blank" rel="noopener noreferrer" class="text-white/20 hover:text-white/60 transition-colors text-xs" title="Open in panel">↗</a>` : '';
+
+const span = (value, cls = '') => `<span${cls ? ` class="${cls}"` : ''}>${escape(value)}</span>`;
+const address = s => s.address ? `<span class="copy" role="button" tabindex="0" title="Copy address" data-copy="${escape(s.address)}">${escape(s.address)}</span>` : '';
+const link = s => s.panelUrl ? `<a class="server__link" href="${url(s.panelUrl)}" target="_blank" rel="noopener noreferrer" title="Open in panel" aria-label="Open ${escape(s.name)} in panel">↗</a>` : '';
+const memory = mb => mb >= 1024 ? `${(mb / 1024).toFixed(0)}GB` : `${mb}MB`;
 function serverRow(s, crafty) {
   const active = s.running ?? s.status === 'running', suspended = s.status === 'suspended';
-  const dot = `<div class="w-1.5 h-1.5 rounded-full flex-shrink-0 ${active ? 'bg-emerald-400' : crafty ? 'bg-red-400/60' : suspended ? 'bg-yellow-400/60' : 'bg-white/20'}"></div>`;
-  const name = text(s.name, 'text-white/80 text-sm font-medium truncate');
-  const state = text(active ? 'online' : suspended ? 'suspended' : s.status === 'unknown' ? 'unknown' : 'offline', `text-xs font-mono ${active ? 'text-emerald-400/60' : suspended ? 'text-yellow-400/40' : 'text-red-400/40'}`);
-  const cpu = () => text(`CPU ${Number(s.cpu || 0).toFixed(1)}%`);
-  if (crafty) return `<div class="rounded-lg bg-white/[0.04] border border-white/[0.06] p-3 flex items-center justify-between gap-3"><div class="min-w-0"><div class="flex items-center gap-2">${dot}${name}${s.version ? text(s.version, 'text-white/20 text-xs font-mono flex-shrink-0') : ''}</div><div class="flex flex-wrap gap-3 mt-1 ml-3.5">${address(s)}${active ? text(`${s.players}/${s.maxPlayers} players`) + cpu() + text(`RAM ${s.ram}`) : ''}</div></div><div class="flex items-center gap-2 flex-shrink-0">${state}${link(s)}</div></div>`;
-  return `<div class="rounded-lg bg-white/[0.04] border border-white/[0.06] p-3"><div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2 min-w-0">${dot}${name}</div><div class="flex items-center gap-2 flex-shrink-0">${state}${link(s)}</div></div><div class="flex flex-wrap gap-3 mt-1.5 ml-3.5">${text(s.node, 'text-white/20 text-xs font-mono')}${address(s)}${s.maxPlayers != null ? text(`max ${s.maxPlayers} players`) : ''}${s.map ? text(s.map, 'text-white/20 text-xs font-mono capitalize') : ''}${active && s.cpu != null ? cpu() : ''}${active && s.ram ? text(`RAM ${s.ram}`) : ''}${!active && s.memoryLimit != null ? text(`${s.memoryLimit >= 1024 ? (s.memoryLimit / 1024).toFixed(0) + 'GB' : s.memoryLimit + 'MB'} RAM limit`, 'text-white/20 text-xs font-mono') : ''}</div></div>`;
+  const tone = active ? 'up' : suspended ? 'paused' : 'down';
+  const label = active ? 'online' : suspended ? 'suspended' : s.status === 'unknown' ? 'unknown' : 'offline';
+  const cpu = `CPU ${Number(s.cpu || 0).toFixed(1)}%`;
+  const meta = crafty
+    ? [address(s), active ? span(`${s.players}/${s.maxPlayers} players`) + span(cpu) + span(`RAM ${s.ram}`) : '']
+    : [span(s.node, 'dim'), address(s), s.maxPlayers != null ? span(`max ${s.maxPlayers} players`) : '', s.map ? span(s.map, 'dim') : '',
+      active && s.cpu != null ? span(cpu) : '', active && s.ram ? span(`RAM ${s.ram}`) : '',
+      !active && s.memoryLimit != null ? span(`${memory(s.memoryLimit)} RAM limit`, 'dim') : ''];
+  return `<div class="server is-${tone}"><div class="server__main"><div class="server__name">${span(s.name)}${crafty && s.version ? span(s.version, 'tag') : ''}</div><div class="server__meta">${meta.join('')}</div></div><div class="server__side"><span class="server__state ${tone}">${label}</span>${link(s)}</div></div>`;
 }
+
 function initPanel(card) {
+  const head = card.querySelector('.panel__head'), details = card.querySelector('[data-details]'), list = card.querySelector('[data-list]');
+  const hint = card.querySelector('[data-hint]'), count = card.querySelector('[data-count]');
   let open = false, stop, data;
-  const hint = card.querySelector('p:last-child'), arrow = card.querySelector('.text-sm:last-child');
-  const details = element('<div class="overflow-hidden" hidden><div class="px-5 pb-5"></div></div>');
-  card.append(details);
-  const content = details.firstElementChild;
-  const render = loading => {
+  const render = () => {
     const servers = data?.[card.dataset.panel] || [];
-    content.innerHTML = loading ? '<div class="text-white/20 text-sm text-center py-4 font-mono">Loading...</div>' : !servers.length ? '<div class="text-white/20 text-sm text-center py-4 font-mono">No servers found</div>' : `<div class="space-y-2">${servers.map(s => serverRow(s, card.dataset.panel === 'crafty')).join('')}</div>`;
+    list.innerHTML = !data ? '<div class="panel__empty">connecting…</div>'
+      : !servers.length ? '<div class="panel__empty">No servers found</div>'
+        : servers.map(s => serverRow(s, card.dataset.panel === 'crafty')).join('');
+    if (data) count.textContent = `${servers.length} server${servers.length === 1 ? '' : 's'}`;
   };
-  card.addEventListener('click', async e => {
-    const copy = e.target.closest('[data-copy]');
-    if (copy) {
-      try { await navigator.clipboard.writeText(copy.dataset.copy); const original = copy.textContent; copy.textContent = '✓ copied'; setTimeout(() => { if (copy.isConnected) copy.textContent = original; }, 2000); } catch { /* Clipboard unavailable. */ }
-      return;
-    }
-    if (e.target.closest('a')) return;
+  head.addEventListener('click', () => {
     open = !open;
-    hint.textContent = open ? 'click to close' : 'click to view servers';
-    arrow.style.transition = 'transform 0.3s'; arrow.style.transform = open ? 'rotate(180deg)' : 'none';
-    card.querySelector('[data-server-count]')?.remove();
+    card.classList.toggle('is-open', open);
+    head.setAttribute('aria-expanded', String(open));
+    hint.textContent = open ? 'hide servers' : 'view servers';
     if (open) {
-      render(!data);
-      stop = poll('/api/panel-status', snapshot => { data = snapshot; if (open) render(false); }, 30000, () => { if (open) render(false); });
-    } else {
-      stop?.();
-      if (data) arrow.before(element(`<span data-server-count class="text-white/30 text-xs font-mono">${data[card.dataset.panel].length} server${data[card.dataset.panel].length !== 1 ? 's' : ''}</span>`));
-    }
+      render();
+      stop = poll('/api/panel-status', snapshot => { data = snapshot; if (open) render(); }, 30000, () => { data ??= {}; if (open) render(); });
+    } else stop?.();
     void expand(details, open);
   });
+  details.addEventListener('click', async e => {
+    const copy = e.target.closest('[data-copy]');
+    if (!copy) return;
+    try {
+      await navigator.clipboard.writeText(copy.dataset.copy);
+      const original = copy.textContent; copy.textContent = '✓ copied';
+      setTimeout(() => { if (copy.isConnected) copy.textContent = original; }, 2000);
+    } catch { /* Clipboard unavailable. */ }
+  });
+  details.addEventListener('keydown', e => { if (['Enter', ' '].includes(e.key) && e.target.closest('[data-copy]')) { e.preventDefault(); e.target.click(); } });
 }

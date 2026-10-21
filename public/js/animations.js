@@ -11,34 +11,20 @@ export function animate(element, from, to, { duration = 0.3, delay = 0, ease, re
     Object.assign(element.style, motionStyle(to)); animation.cancel();
   }).catch(() => {});
 }
+// Elements marked data-reveal fade in once they enter the viewport; --d staggers them.
 export function reveal(root = document) {
-  for (const element of root.querySelectorAll('[data-motion]')) {
-    const { initial = {}, animate: target = {}, viewport, transition, hover } = JSON.parse(element.dataset.motion);
-    element.removeAttribute('data-motion');
-    const start = () => animate(element, initial, target, transition);
-    if (reduced.matches) Object.assign(element.style, motionStyle(target));
-    else {
-      Object.assign(element.style, motionStyle(initial));
-      if (viewport) {
-        const observer = new IntersectionObserver(entries => {
-          if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); void start(); }
-        }, { rootMargin: viewport.margin || '0px' });
-        observer.observe(element);
-      } else void start();
+  const items = [...root.querySelectorAll('[data-reveal]:not(.is-in)')];
+  if (reduced.matches || !('IntersectionObserver' in window)) { items.forEach(el => el.classList.add('is-in')); return; }
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const el = entry.target;
+      el.classList.add('is-in'); observer.unobserve(el);
+      // Hand the element back to its own hover transitions once it has arrived.
+      setTimeout(() => el.removeAttribute('data-reveal'), 1400);
     }
-    if (hover) {
-      let animation;
-      const move = values => {
-        if (reduced.matches) return;
-        const current = getComputedStyle(element);
-        const from = { transform: current.transform, opacity: current.opacity };
-        animation?.cancel();
-        animation = element.animate([from, motionStyle({ ...target, ...values })], { duration: (transition?.duration ?? 0.3) * 1000, easing: easing(transition?.ease), fill: 'forwards' });
-      };
-      element.addEventListener('mouseenter', () => move(hover));
-      element.addEventListener('mouseleave', () => move(target));
-    }
-  }
+  }, { rootMargin: '0px 0px -60px 0px' });
+  items.forEach(el => observer.observe(el));
 }
 export async function removeWithFade(element) {
   if (!element || element.dataset.closing) return;

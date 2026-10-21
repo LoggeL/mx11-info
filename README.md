@@ -2,7 +2,6 @@
 
 Plain HTML, CSS and browser JavaScript with a small Node.js 24 server.
 There are **no npm dependencies**, including development dependencies, and no build step.
-The existing layout, CSS, logos, responsive rules and animation settings are preserved.
 
 ## Development
 
@@ -17,22 +16,24 @@ for source checks; it does not generate an output directory. `npm audit` reports
 
 ## Implementation
 
-`public/` contains three complete HTML pages, stylesheets, SVGs and small native ES modules.
-The home page's service links and portfolio navigation work without JavaScript.
-Browser JavaScript updates status cards, expands server lists, manages announcements and
-admin access, opens photo/video lightboxes and draws the interactive background.
-Animations use Web Animations and IntersectionObserver and respect reduced motion.
-The canvas repaints only for input, resize or an active ripple.
+`public/` contains three complete HTML pages, one stylesheet (`site.css`), SVGs and small native
+ES modules. The home page's service links and portfolio navigation work without JavaScript.
+Browser JavaScript updates status cards, the network topology and the service health overview,
+expands server lists, manages announcements and admin access, opens photo/video lightboxes and
+draws the interactive grid background (cursor spotlight, click ripples, travelling data packets).
+Elements marked `data-reveal` fade in on scroll; `--d` staggers them. All motion respects reduced
+motion, and the background pauses while the tab is hidden.
 
-`public/design.css` preserves the original compiled utility rules. There is no CSS generator.
-When adding a new class, add its rule directly. Project-specific CSS lives in `globals.css`.
-The original Tailwind MIT license is retained in `docs/tailwind-license.txt`.
+`site.css` defines the design tokens on `:root` (brand navy `#242a64`, glow blue, status colours)
+and plain component classes. Per-service accent colours appear only on hover.
 
 `server/index.js` serves a fixed inventory of public files, supports gzip/Brotli and conditional
 requests, and routes `/api/*` requests using the standard Request and Response interfaces.
 Private server files, configuration and data are outside the public file inventory.
 Integration modules use native Node HTTP, fetch, crypto, TCP/UDP, filesystem and process APIs.
 The Network cards use the host OS's `ping` utility, included in the Alpine container.
+The service health overview reads the public Uptime Kuma status page (`STATUS_URL`,
+`STATUS_PAGE_SLUG`) and needs no credentials.
 
 ## Configuration and security
 

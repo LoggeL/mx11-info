@@ -5,9 +5,9 @@ import { statusJava, statusBedrock, statusLegacy } from "./minecraft.js";
 const execute = promisify(execFile);
 const primaryHost = process.env.MX11_PRIMARY_HOST || "100.94.173.108";
 const secondaryHost = process.env.MX11_SECONDARY_HOST || "100.110.39.105";
+const datacenterHost = process.env.MX11_DATACENTER_HOST || "100.69.1.39";
 const HTTP_SERVICES = [
     "immich.mx11.org",
-    "map.mx11.org",
     "crafty.mx11.org",
     "jellyfin.mx11.org",
     "paperless.mx11.org",
@@ -80,11 +80,12 @@ function recordPing(host, ping) {
         pingHistory[host].shift();
 }
 async function readStatus() {
-    const [httpResults, mcResults, tsResult, ts2Result] = await Promise.all([
+    const [httpResults, mcResults, tsResult, ts2Result, dcResult] = await Promise.all([
         Promise.all(HTTP_SERVICES.map(async (host) => [host, await checkHttp(host)])),
         Promise.all(MC_SERVERS.map(async (srv) => [srv.host, await checkMc(srv)])),
         checkTailscale(),
         checkICMP(secondaryHost),
+        checkICMP(datacenterHost),
     ]);
     const status = {};
     for (const [host, data] of httpResults) {
@@ -99,6 +100,8 @@ async function readStatus() {
     status["tailscale"] = { ...tsResult, history: [...pingHistory["tailscale"]] };
     recordPing("tailscale2", ts2Result.ping);
     status["tailscale2"] = { ...ts2Result, history: [...pingHistory["tailscale2"]] };
+    recordPing("datacenter", dcResult.ping);
+    status["datacenter"] = { ...dcResult, history: [...pingHistory["datacenter"]] };
     return status;
 }
 export const getStatus = cachedLoader(readStatus, 15_000);

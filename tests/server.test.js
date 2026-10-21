@@ -32,11 +32,11 @@ test('native HTTP server preserves pages, compression, routing and protected adm
       assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
     });
     await t.test('HEAD, ETags and compression negotiation behave correctly', async () => {
-      const response = await fetch(base + '/design.css', { method: 'HEAD', headers: { 'Accept-Encoding': 'br' } });
+      const response = await fetch(base + '/site.css', { method: 'HEAD', headers: { 'Accept-Encoding': 'br' } });
       assert.equal(response.status, 200); assert.equal(await response.text(), '');
       assert.equal(response.headers.get('content-encoding'), 'br');
-      assert.equal((await fetch(base + '/design.css', { headers: { 'If-None-Match': response.headers.get('etag') } })).status, 304);
-      const raw = await fetch(base + '/design.css', { headers: { 'Accept-Encoding': 'br;q=0, gzip;q=0' } });
+      assert.equal((await fetch(base + '/site.css', { headers: { 'If-None-Match': response.headers.get('etag') } })).status, 304);
+      const raw = await fetch(base + '/site.css', { headers: { 'Accept-Encoding': 'br;q=0, gzip;q=0' } });
       assert.equal(raw.headers.get('content-encoding'), null);
     });
     await t.test('private files, unknown paths and unsupported methods are rejected', async () => {
